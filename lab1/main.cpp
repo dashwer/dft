@@ -718,9 +718,9 @@ void test_Force_class()
 
 int main()
 {
-	std::unique_ptr<Surface_energy_t> dist = std::make_unique<Surface_energy_t>(
-											1.0, measures_t::Hartree_Bohrs, 
-											measures_t::Joules_meters
-										);
-	dist->printer();
+	std::unique_ptr<Surface_energy_t> obj = std::make_unique<Surface_energy_t>(
+												0.00049833, measures_t::Hartree_Bohrs, 
+												measures_t::Joules_meters
+											   );
+	obj->printer();
 }
