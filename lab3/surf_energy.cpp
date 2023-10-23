@@ -7,22 +7,25 @@ constexpr int nodes_number = 8;
 constexpr double beta_init = 0.8;
 constexpr double h_init = 0.01;
 constexpr double h_lim = 1e-8;
-constexpr double n0 = 0.0194;
+constexpr double n0 = 0.03477; 
+
+constexpr double left = 0.0;
+constexpr double right = 1.0;
 
 constexpr double weights[nodes_number] = 
 {
-	0.10122854,0.22238104,
-	0.31370664,0.36268378,
-	0.36268378,0.31370664,
-	0.22238104,0.10122854
+	0.10122854, 0.22238104,
+	0.31370664, 0.36268378,
+	0.36268378, 0.31370664,
+	0.22238104, 0.10122854
 };
 	     
 constexpr double nodes[nodes_number] = 
 {
-	-0.96028986,-0.79666648,
-	-0.52553242,-0.18343464,
-	0.18343464,0.52553242,
-	0.79666648,0.96028986
+	-0.96028986, -0.79666648,
+	-0.52553242, -0.18343464,
+	 0.18343464,  0.52553242,
+	 0.79666648,  0.96028986
 };
 
 using func_t = std::function<double(const double)>;
@@ -32,7 +35,6 @@ double w_kin(const double x);
 double w_cul(const double x);
 double w_x(const double x);
 double w_c(const double x);
-//double w_kin2(const double x);
 double w_xc2(const double x);
 
 struct
@@ -42,7 +44,7 @@ struct
 } w;
 
 nodes_container_t nodes_recalculation(const double a, const double b);
-double gauss_integral(const func_t& f);
+double gauss_integral(const func_t& f, const double a, const double b);
 double sigma(const double beta);
 double hooke_jeeves(const func_t& f, const double x0);
 double hooke_jeeves_investigation(const func_t& f, const double x, const double h);
@@ -50,12 +52,12 @@ double hooke_jeeves_investigation(const func_t& f, const double x, const double 
 
 int main()
 {
-	w.kin = gauss_integral(w_kin);
-	w.cul = gauss_integral(w_cul);
-	w.x = gauss_integral(w_x);
-	w.c = gauss_integral(w_c);
+	w.kin = gauss_integral(w_kin, left, right);
+	w.cul = gauss_integral(w_cul, left, right);
+	w.x = gauss_integral(w_x, left, right);
+	w.c = gauss_integral(w_c, left, right);
 	w.kin2 = n0 * std::log(2.0) / 72;
-	w.xc2 = gauss_integral(w_xc2);
+	w.xc2 = gauss_integral(w_xc2, left, right);
 
 	const double beta0 = hooke_jeeves(sigma, beta_init);
 	const double sigma0 = sigma(beta0);
@@ -68,7 +70,7 @@ double w_kin(const double x)
 {
 	return 0.3 * std::pow(3*M_PI*M_PI, 2.0/3.0) * std::pow(n0, 5.0/3.0) * (
 			   	 	std::pow(1.0 - 0.5*x, 5.0/3.0) + std::pow(0.5*x, 5.0/3.0) - 1.0
-			   	 ) / x;
+		         ) / x;
 }
 
 
@@ -84,7 +86,7 @@ double w_x(const double x)
 {
 	return -0.75 * std::pow(3.0/M_PI, 1.0/3.0) * std::pow(n0, 4.0/3.0) * (
 			   	 	 std::pow(1.0 - 0.5*x, 4.0/3.0) + std::pow(0.5*x, 4.0/3.0) - 1.0
-		    ) / x;
+		           ) / x;
 }
 
 
@@ -136,15 +138,19 @@ nodes_container_t nodes_recalculation(
 }
 
 
-double gauss_integral(const func_t& f)
+double gauss_integral(
+	const func_t& f, 
+	const double a, 
+	const double b
+)
 {
-	nodes_container_t recalculated_nodes = nodes_recalculation(0.0, 1.0);
+	nodes_container_t recalculated_nodes = nodes_recalculation(a, b);
 	double I = 0.0;
 
 	for (int i = 0; i < nodes_number; ++i) {
 		I += weights[i] * f(recalculated_nodes[i]);
 	}
-	I /= 2.0;
+	I *= (b - a) / 2.0;
 
 	return I;
 }
