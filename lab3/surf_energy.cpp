@@ -3,11 +3,13 @@
 #include <functional>
 #include <stdio.h>
 
+constexpr double coeff = 1555168.;
+
 constexpr int nodes_number = 8;
 constexpr double beta_init = 0.8;
 constexpr double h_init = 0.01;
 constexpr double h_lim = 1e-8;
-constexpr double n0 = 0.03477; 
+constexpr double n0 = 0.0038;
 
 constexpr double left = 0.0;
 constexpr double right = 1.0;
@@ -62,7 +64,15 @@ int main()
 	const double beta0 = hooke_jeeves(sigma, beta_init);
 	const double sigma0 = sigma(beta0);
 
-	printf("Result: %5.8f\n", sigma0);
+	printf("w_kin: %5.8f\n", coeff*w.kin/beta0);
+	printf("w_cul: %5.8f\n", coeff*w.cul/(beta0*beta0*beta0));
+	printf("w_x: %5.8f\n", coeff*w.x/beta0);
+	printf("w_c: %5.8f\n", coeff*w.c/beta0);
+	printf("w_kin2: %5.8f\n", coeff*w.kin2*beta0);
+	printf("w_xc2: %5.8f\n", coeff*w.xc2*beta0);
+
+	printf("Beta: %5.8f\n", beta0);
+	printf("Result: %5.8f\n", coeff*sigma0);
 }
 
 
@@ -77,7 +87,7 @@ double w_kin(const double x)
 double w_cul(const double x)
 {
 	return -2.0 * M_PI * n0*n0 * (
-			   	 (1.0 - 0.5*x)*(1 - 0.5*x) + 0.25*x*x - 1.0
+			   	 (1.0 - 0.5*x)*(1 - 0.5*x) + 0.25*x*x - (1.0 - 0.5*x)
 		    ) / x;
 }
 
@@ -92,7 +102,7 @@ double w_x(const double x)
 
 double w_c(const double x)
 {
-	return -0.0056 * std::pow(n0, 4.0/3.0) * (
+	return -0.056 * std::pow(n0, 4.0/3.0) * (
 				
 				std::pow(1.0 - 0.5*x, 4.0/3.0) / 
 				(0.079 + std::pow(n0, 1.0/3.0) * std::pow(1.0 - 0.5*x, 1.0/3.0))
