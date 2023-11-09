@@ -3,6 +3,8 @@
 #include <functional>
 #include <stdio.h>
 
+/// PHYSICAL CONSTANTS ///
+
 constexpr double h = 6.62607015 * 1e-34;       ///Постоянная Планка("6.62607015e-34")
 constexpr double c = 2.99792458 * 1e8;         ///Скорость света("299792458")
 constexpr double e = 1.602176634 * 1e-19;      ///Заряд электрона("1.602176634e-19")
@@ -14,14 +16,24 @@ constexpr double E_h = (m_e * 4*pi*pi * e*e*e*e * c*c*c*c * 1e-14) / (h*h);/// �
 
 constexpr double coeff = (E_h*1e3) / (a_0*a_0);
 
-constexpr int nodes_number = 8;
-constexpr double beta_init = 0.8;
-constexpr double h_init = 0.01;
-constexpr double h_lim = 1e-8;
-constexpr double n0 = 0.0412;
+/// SYSTEM PARAMETERS ///
 
+constexpr double n0 = 0.0412;
+constexpr int Z = 5;
+constexpr double C = 8.82;
+constexpr double d = 1.8;
+constexpr double r_s = std::pow(4.0*M_PI*n0 / 3.0, -1.0/3.0);
+constexpr double r_c = (std::sqrt(2.0) * r_s / 3.0) * std::sqrt(
+							0.458 - 2.21 / r_s + 0.9*std::pow(Z, 2.0/3.0)
+						  + 0.0071*r_s*r_s / ((1.0 + 0.127*r_s)*(1.0 + 0.127*r_s))
+					   );
+
+/// GAUSS METHOD PARAMETERS ///
+
+constexpr int nodes_number = 8;
 constexpr double left = 0.0;
 constexpr double right = 1.0;
+
 
 constexpr double weights[nodes_number] = 
 {
@@ -38,6 +50,14 @@ constexpr double nodes[nodes_number] =
 	 0.18343464,  0.52553242,
 	 0.79666648,  0.96028986
 };
+
+/// HOOKE-JEEVES METHOD PARAMETERS ///
+
+constexpr double beta_init = 0.8;
+constexpr double h_init = 0.01;
+constexpr double h_lim = 1e-8;
+
+///
 
 using func_t = std::function<double(const double)>;
 using nodes_container_t = std::array<double, nodes_number>;
@@ -67,11 +87,13 @@ int main()
 	w.cul = gauss_integral(w_cul, left, right);
 	w.x = gauss_integral(w_x, left, right);
 	w.c = gauss_integral(w_c, left, right);
-	w.kin2 = n0 * std::log(2.0) / 72;
+	w.kin2 = n0 * std::log(2.0) / 72.0;
 	w.xc2 = gauss_integral(w_xc2, left, right);
 
 	const double beta0 = hooke_jeeves(sigma, beta_init);
 	const double sigma0 = sigma(beta0);
+
+	printf("r_c: %5.8f\n", r_c);
 
 	printf("w_kin: %5.8f\n", coeff*w.kin/beta0);
 	printf("w_cul: %5.8f\n", coeff*w.cul/(beta0*beta0*beta0));
@@ -177,10 +199,18 @@ double gauss_integral(
 
 double sigma(const double beta)
 {
+	using std::sqrt;
+	using std::exp;
+	using std::cosh;
+
 	return w.kin / beta 
 		 + w.cul / (beta*beta*beta)
 		 + w.x / beta + w.c / beta
-		 + w.kin2 * beta + w.xc2 * beta;
+		 + w.kin2 * beta + w.xc2 * beta
+		 + sqrt(3.0)*Z*Z / (C*C*C) * exp(-4.0*M_PI*d / (sqrt(3.0)*C))
+		 + 2*M_PI*n0*n0 * (
+		       1.0 - cosh(beta*r_c)*beta*d*exp(-0.5*beta*d) / (1.0-exp(-beta*d))
+		   ) / (beta*beta*beta);
 }
 
 

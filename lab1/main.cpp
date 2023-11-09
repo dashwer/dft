@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-constexpr int accuracy = 3; 											  
+constexpr int accuracy = 8; 											  
 constexpr double order = std::pow(10, accuracy);
 
 
@@ -718,9 +718,9 @@ void test_Force_class()
 
 int main()
 {
-	std::unique_ptr<Surface_energy_t> obj = std::make_unique<Surface_energy_t>(
-												0.00049833, measures_t::Hartree_Bohrs, 
-												measures_t::Joules_meters
+	std::unique_ptr<Distance_t> obj = std::make_unique<Distance_t>(
+												3.3004, measures_t::Angstroms, 
+												measures_t::Bohrs
 											   );
 	obj->printer();
 }
