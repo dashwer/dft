@@ -11,10 +11,11 @@ constexpr double e = 1.602176634 * 1e-19;      ///Заряд электрона(
 constexpr double m_e = 9.1093837015 * 1e-31;   ///Масса электрона("9.1093837015e-31")
 constexpr double pi = 3.14159265358979; 	   ///Число пи("3.14159265358979")
 
-constexpr double a_0 = (h*h * 1e7) / (m_e * 4 * pi*pi * e*e * c*c);        /// Боровский радиус
-constexpr double E_h = (m_e * 4*pi*pi * e*e*e*e * c*c*c*c * 1e-14) / (h*h);/// Энергия Хартри 
+constexpr double a_0 = (h*h * 1e7) / (m_e * 4 * pi*pi * e*e * c*c);         /// Боровский радиус
+constexpr double E_h = (m_e * 4*pi*pi * e*e*e*e * c*c*c*c * 1e-14) / (h*h); /// Энергия Хартри 
 
-constexpr double coeff = (E_h*1e3) / (a_0*a_0);
+constexpr double to_mJ = (E_h*1e3) / (a_0*a_0);
+constexpr double to_eV = E_h / e;
 
 /// SYSTEM PARAMETERS ///
 
@@ -28,12 +29,20 @@ constexpr double r_c = (std::sqrt(2.0) * r_s / 3.0) * std::sqrt(
 						  + 0.0071*r_s*r_s / ((1.0 + 0.127*r_s)*(1.0 + 0.127*r_s))
 					   );
 
+const double mu = 0.5 * std::pow(3.0*M_PI*M_PI*n0, 2.0/3.0)
+			      - std::pow(3.0*n0/M_PI, 1.0/3.0)
+			      - (0.056*std::pow(n0, 2.0/3.0) + 0.0059*std::pow(n0, 1.0/3.0)) / 
+			      	((0.079 + std::pow(n0, 1.0/3.0))*(0.079 + std::pow(n0, 1.0/3.0)))
+			      - 0.4 * std::pow(Z, 2.0/3.0) * std::pow(4.0*M_PI*n0/3.0, 1.0/3.0)
+			      + 4.0*M_PI*n0*r_c*r_c;
+
 /// GAUSS METHOD PARAMETERS ///
 
 constexpr int nodes_number = 8;
 constexpr double left = 0.0;
 constexpr double right = 1.0;
 
+using nodes_container_t = std::array<double, nodes_number>;
 
 constexpr double weights[nodes_number] = 
 {
@@ -65,9 +74,8 @@ constexpr Dual h_lim = {1e-8, 1e-8};
 
 ///
 
-using func_t = std::function<double(const double)>;
-using func2_t = std::function<double(const Dual)>;
-using nodes_container_t = std::array<double, nodes_number>;
+using w_t = std::function<double(const double)>;
+using sigma_t = std::function<double(const Dual)>;
 
 double w_kin(const double x);
 double w_cul(const double x);
@@ -77,6 +85,10 @@ double w_xc2(const double x);
 double w_kin4(const double x);
 double w_xc4(const double x);
 
+double D0(const double beta);
+double D_ei(const double beta);
+double D_delta(const double beta, const double delta);
+
 struct
 {
 	double kin, cul, x, c;
@@ -85,10 +97,11 @@ struct
 } w;
 
 nodes_container_t nodes_recalculation(const double a, const double b);
-double gauss_integral(const func_t& f, const double a, const double b);
+double gauss_integral(const w_t& f, const double a, const double b);
 double sigma(const Dual& param);
-Dual hooke_jeeves(const func2_t& f, const Dual x0);
-Dual hooke_jeeves_investigation(const func2_t& f, const Dual x, const Dual h);
+double work_function(const double beta, const double delta);
+Dual hooke_jeeves(const sigma_t& f, const Dual x0);
+Dual hooke_jeeves_investigation(const sigma_t& f, const Dual x, const Dual h);
 
 
 int main()
@@ -104,24 +117,28 @@ int main()
 
 	Dual init_param{beta_init, delta_init};
 	Dual param0 = hooke_jeeves(sigma, init_param);
+
+	const double beta0 = param0.first;
+	const double delta0 = param0.second;
 	const double sigma0 = sigma(param0);
-	const double beta = param0.first;
-	const double delta = param0.second;
+	const double W = work_function(beta0, delta0);
 
 	printf("r_c: %5.8f\n", r_c);
 
-	printf("w_kin: %5.8f\n", coeff*w.kin/beta);
-	printf("w_cul: %5.8f\n", coeff*w.cul/(beta*beta*beta));
-	printf("w_x: %5.8f\n", coeff*w.x/beta);
-	printf("w_c: %5.8f\n", coeff*w.c/beta);
-	printf("w_kin2: %5.8f\n", coeff*w.kin2*beta);
-	printf("w_xc2: %5.8f\n", coeff*w.xc2*beta);
-	printf("w_kin4: %5.8f\n", coeff*w.kin4*beta*beta*beta);
-	printf("w_xc4: %5.8f\n", coeff*w.xc4*beta*beta*beta);
+	printf("w_kin: %5.8f\n", to_mJ*w.kin/beta0);
+	printf("w_cul: %5.8f\n", to_mJ*w.cul/(beta0*beta0*beta0));
+	printf("w_x: %5.8f\n", to_mJ*w.x/beta0);
+	printf("w_c: %5.8f\n", to_mJ*w.c/beta0);
+	printf("w_kin2: %5.8f\n", to_mJ*w.kin2*beta0);
+	printf("w_xc2: %5.8f\n", to_mJ*w.xc2*beta0);
+	printf("w_kin4: %5.8f\n", to_mJ*w.kin4*beta0*beta0*beta0);
+	printf("w_xc4: %5.8f\n", to_mJ*w.xc4*beta0*beta0*beta0);
 
-	printf("Beta: %5.8f\n", beta);
-	printf("Delta: %5.8f\n", delta);
-	printf("Result: %5.8f\n", coeff*sigma0);
+	printf("Beta: %5.8f\n", beta0);
+	printf("Delta: %5.8f\n", delta0);
+	
+	printf("Sigma: %5.8f\n", to_mJ*sigma0);
+	printf("Work function: %5.8f\n", to_eV*W);
 }
 
 
@@ -221,7 +238,7 @@ nodes_container_t nodes_recalculation(
 
 
 double gauss_integral(
-	const func_t& f, 
+	const w_t& f, 
 	const double a, 
 	const double b
 )
@@ -238,28 +255,110 @@ double gauss_integral(
 }
 
 
+double sigma_kin(const double beta)
+{
+	return w.kin / beta;
+}
+
+double sigma_kul(const double beta)
+{
+	return w.cul / (beta*beta*beta);
+}
+
+double sigma_x(const double beta)
+{
+	return w.x / beta;
+}
+
+double sigma_c(const double beta)
+{
+	return w.c / beta;
+}
+
+double sigma_kin2(const double beta)
+{
+	return w.kin2 * beta;
+}
+
+double sigma_xc2(const double beta)
+{
+	return w.xc2 * beta;
+}
+
+double sigma_kin4(const double beta)
+{
+	return w.kin4 * (beta*beta*beta);
+}
+
+double sigma_xc4(const double beta)
+{
+	return w.xc4 * (beta*beta*beta);
+}
+
+double sigma_ii(const double beta, const double delta)
+{
+	using std::sqrt, std::exp;
+	const double coeff = sqrt(3.0)*Z*Z / (C*C*C);
+	const double exp_arg1 = -4.0*M_PI*d / (sqrt(3.0)*C);
+	const double exp_arg2 = 8.0*M_PI*delta/(sqrt(3.0)*C);
+	
+	return coeff * exp(exp_arg1) * exp(exp_arg2);
+}
+
+double sigma_ei(const double beta, const double delta)
+{
+	const double ei = 2*M_PI*n0*n0 * (
+		       				1.0 - cosh(beta*r_c)*beta*d*exp(-0.5*beta*d) / (1.0 - exp(-beta*d))
+		   			  ) / (beta*beta*beta);
+
+	const double d_ei = 2.0 * M_PI * n0*n0 * d * (
+		 					delta*delta + (1 - exp(beta*delta)) * exp(-0.5*beta*d) * cosh(beta*r_c) / (beta*beta)
+		 				);
+
+	return ei + d_ei; 
+}
+
 double sigma(const Dual& param)
 {
-	using std::sqrt;
-	using std::exp;
-	using std::cosh;
+	using std::sqrt, std::exp, std::sqrt;
 
 	const double beta = param.first;
 	const double delta = param.second;
 
-	return w.kin / beta 
-		 + w.cul / (beta*beta*beta)
-		 + w.x / beta + w.c / beta
-		 + w.kin2 * beta + w.xc2 * beta
-		 + sqrt(3.0)*Z*Z / (C*C*C) * exp(-4.0*M_PI*d / (sqrt(3.0)*C)) * exp(8.0*M_PI*delta/(sqrt(3.0)*C))
-		 + 2*M_PI*n0*n0 * (
-		       1.0 - cosh(beta*r_c)*beta*d*exp(-0.5*beta*d) / (1.0-exp(-beta*d))
-		   ) / (beta*beta*beta)
-		 + 2.0 * M_PI * n0*n0 * d * (
-		 	delta*delta + (1 - exp(beta*delta)) * exp(-0.5*beta*d) * cosh(beta*r_c) / (beta*beta)
-		 ) 
-		 + w.kin4 * (beta*beta*beta)
-		 + w.xc4 * (beta*beta*beta);
+	return sigma_kin(beta) + sigma_kul(beta) + sigma_x(beta) + sigma_c(beta)
+		 + sigma_kin2(beta) + sigma_xc2(beta);
+		 //+ sigma_kin4(beta) + sigma_xc4(beta)
+		 //+ sigma_ii(beta, delta) + sigma_ei(beta, delta);
+}
+
+
+double D0(const double beta) 
+{
+	return 4.0*M_PI*n0 * e*e / (beta*beta);
+}
+
+double D_ei(const double beta)
+{
+	using std::exp, std::sinh, std::cosh;
+
+	return -(4.0*M_PI*n0/(beta*beta)) * exp(-0.5*beta*d) * (
+				beta*d*cosh(beta*r_c) - 2.0*sinh(-0.5*beta*d)
+			) / (2.0 - exp(-beta*d));
+}
+
+double D_delta(const double beta, const double delta)
+{
+	using std::exp, std::sinh;
+
+	return -(4.0*M_PI*n0*exp(beta*(delta - 0.5*d))/(beta*beta*(2.0 - exp(-beta*d))) * (
+				2.0 * (1.0 - exp(beta*delta)) * sinh(0.5*beta*d)) - beta*beta*delta*d
+			) + D_ei(beta) * (exp(beta*delta) - 1.0) - 4*M_PI*n0*d*delta;
+}
+
+
+double work_function(const double beta, const double delta)
+{
+	return D0(beta) - mu; //+ D_ei(beta) + D_delta(beta, delta);
 }
 
 
@@ -292,7 +391,7 @@ Dual operator*(const double lhs, const Dual& rhs)
 }
 
 Dual hooke_jeeves(
-	const func2_t& f, 
+	const sigma_t& f, 
 	const Dual x0
 )
 {
@@ -325,7 +424,7 @@ Dual hooke_jeeves(
 
 
 Dual hooke_jeeves_investigation(
-	const func2_t& f, 
+	const sigma_t& f, 
 	const Dual x,
 	const Dual h
 )
