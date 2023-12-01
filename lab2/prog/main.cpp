@@ -28,7 +28,7 @@ double C_7;
 
 int const_config()
 {
-    C_3 = 0.5 * k; 
+    C_3 = 0.5 * k;
     
     C_4 = ( 
         C_3 * std::exp(-2*beta*D) * (delta*delta - 1) 

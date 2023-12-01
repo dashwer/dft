@@ -498,8 +498,8 @@ return(y);
 
 float w(float nx,float fi,float dn,float dnn)
 {float y;
-y=wku(nx,fi)+wki(nx)+wob(nx)+wcor(nx)+wvk(nx,dn)+ww(nx,dn);//+svk4(nx,dn,dnn);
-//y+=sww4(nx,dnn);
+y=wku(nx,fi)+wki(nx)+wob(nx)+wcor(nx)+wvk(nx,dn)+ww(nx,dn)+svk4(nx,dn,dnn);
+y+=sww4(nx,dnn);
 return(y);
 }
 

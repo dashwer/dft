@@ -22,23 +22,15 @@ constexpr double to_eV = E_h / e;
 
 /// SYSTEM PARAMETERS ///
 
-constexpr double n0 = 0.0412;
-constexpr int Z = 5;
-constexpr double C = 8.82;
-constexpr double d = 1.8;
+constexpr double n0 = 0.0194;
+constexpr int Z = 4;
+constexpr double C = 6.589;
+constexpr double d = 5.38;
 constexpr double r_s = std::pow(4.0*M_PI*n0 / 3.0, -1.0/3.0);
 constexpr double r_c = (std::sqrt(2.0) * r_s / 3.0) * std::sqrt(
 							0.458 - 2.21 / r_s + 0.9*std::pow(Z, 2.0/3.0)
 						  + 0.0071*r_s*r_s / ((1.0 + 0.127*r_s)*(1.0 + 0.127*r_s))
 					   );
-
-const double mu = 0.5 * std::pow(3.0*M_PI*M_PI*n0, 2.0/3.0)
-			      - std::pow(3.0*n0/M_PI, 1.0/3.0)
-			      - (0.056*std::pow(n0, 2.0/3.0) + 0.0059*std::pow(n0, 1.0/3.0)) / 
-			      	((0.079 + std::pow(n0, 1.0/3.0))*(0.079 + std::pow(n0, 1.0/3.0)))
-			      - 0.4 * std::pow(Z, 2.0/3.0) * std::pow(4.0*M_PI*n0/3.0, 1.0/3.0)
-			      + 4.0*M_PI*n0*r_c*r_c;
-
 /// GAUSS METHOD ///
 
 constexpr int nodes_number = 8;
@@ -88,6 +80,13 @@ double w_xc2(const double x);
 double w_kin4(const double x);
 double w_xc4(const double x);
 
+struct
+{
+	double kin, cul, x, c;
+	double kin2, xc2;
+	double kin4, xc4;
+} w;
+
 double sigma_kin(const double beta);
 double sigma_cul(const double beta);
 double sigma_x(const double beta);
@@ -103,12 +102,13 @@ double D0(const double beta);
 double D_ei(const double beta);
 double D_delta(const double beta, const double delta);
 
-struct
-{
-	double kin, cul, x, c;
-	double kin2, xc2;
-	double kin4, xc4;
-} w;
+const double mu = 0.5 * std::pow(3.0*M_PI*M_PI*n0, 2.0/3.0)
+			      - std::pow(3.0*n0/M_PI, 1.0/3.0)
+			      - (0.056*std::pow(n0, 2.0/3.0) + 0.0059*std::pow(n0, 1.0/3.0)) / 
+			      	((0.079 + std::pow(n0, 1.0/3.0))*(0.079 + std::pow(n0, 1.0/3.0)))
+			      - 0.4 * std::pow(Z, 2.0/3.0) * std::pow(4.0*M_PI*n0/3.0, 1.0/3.0)
+			      + 4.0*M_PI*n0*r_c*r_c;
+
 
 
 double sigma(const double beta, const double delta);
@@ -134,13 +134,15 @@ int main()
 	double beta = beta_init;
 	double delta = delta_init;
 	
-	hooke_jeeves(sigma, beta, delta); // hooke_jeeves(sigma, beta, delta);
+	hooke_jeeves(sigma, beta, delta); // hooke_jeeves(sigma, beta) or hooke_jeeves(sigma, beta, delta);
 
 	const double E_surf = sigma(beta, delta);
 	const double W = work_function(beta, delta);
 
 	char filename[BUFSIZ];
-	sprintf(filename, "result[delta][Nb][111].dat");
+	//sprintf(filename, "result[delta][Nb][111].dat");
+	sprintf(filename, "result.dat");
+
 	FILE* out = fopen(filename, "w+");
 
 	fprintf(out, "r_c: %5.8f\n\n", r_c);
@@ -180,7 +182,7 @@ double sigma(const double beta, const double delta)
 
 double work_function(const double beta, const double delta)
 {
-	return D0(beta) - mu; //+ D_ei(beta) + D_delta(beta, delta);
+	return D0(beta) - mu + D_ei(beta) + D_delta(beta, delta);
 }
 
 
@@ -363,7 +365,7 @@ double sigma_ei(const double beta, const double delta)
 
 double D0(const double beta) 
 {
-	return 4.0*M_PI*n0 * e*e / (beta*beta);
+	return 4.0*M_PI*n0 / (beta*beta);
 }
 
 double D_ei(const double beta)
