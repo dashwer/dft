@@ -25,7 +25,7 @@ constexpr double to_eV = E_h / e;
 constexpr double n0 = 0.0194;
 constexpr int Z = 4;
 constexpr double C = 6.589;
-constexpr double d = 3.28;
+constexpr double d = 4.66;
 constexpr double r_s = std::pow(4.0*M_PI*n0 / 3.0, -1.0/3.0);
 constexpr double r_c = (std::sqrt(2.0) * r_s / 3.0) * std::sqrt(
 							0.458 - 2.21 / r_s + 0.9*std::pow(Z, 2.0/3.0)
@@ -105,9 +105,9 @@ double D_delta(const double beta, const double delta);
 const double mu = 0.5 * std::pow(3.0*M_PI*M_PI*n0, 2.0/3.0)
 			      - std::pow(3.0*n0/M_PI, 1.0/3.0)
 			      - (0.056*std::pow(n0, 2.0/3.0) + 0.0059*std::pow(n0, 1.0/3.0)) / 
-			      	((0.079 + std::pow(n0, 1.0/3.0))*(0.079 + std::pow(n0, 1.0/3.0)));
-			      //- 0.4 * std::pow(Z, 2.0/3.0) * std::pow(4.0*M_PI*n0/3.0, 1.0/3.0)
-			      //+ 4.0*M_PI*n0*r_c*r_c;
+			      	((0.079 + std::pow(n0, 1.0/3.0))*(0.079 + std::pow(n0, 1.0/3.0)))
+			      - 0.4 * std::pow(Z, 2.0/3.0) * std::pow(4.0*M_PI*n0/3.0, 1.0/3.0)
+			      + 4.0*M_PI*n0*r_c*r_c;
 
 
 
@@ -116,61 +116,23 @@ double work_function(const double beta, const double delta);
 
 ///
 
+double f1(const double x, const double y)
+{
+	return x*x*x - x*x;
+}
+
+
+double f2(const double x, const double y)
+{
+	return (x-8)*(x-8) + (y-0.8)*(y-0.8);
+}
+
+
 int main()
 {
-	/// INTEGRAL COMPUTING ///
-
-	w.kin = gauss_integral(w_kin, left, right);
-	w.cul = gauss_integral(w_cul, left, right);
-	w.x = gauss_integral(w_x, left, right);
-	w.c = gauss_integral(w_c, left, right);
-	w.kin2 = n0 * std::log(2.0) / 72.0;
-	w.xc2 = gauss_integral(w_xc2, left, right);
-	w.kin4 = gauss_integral(w_kin4, left, right);
-	w.xc4 = gauss_integral(w_xc4, left, right);
-
-	///
-
-	double beta = beta_init;
-	double delta = delta_init;
-	
-	hooke_jeeves(sigma, beta); // hooke_jeeves(sigma, beta) or hooke_jeeves(sigma, beta, delta);
-
-	const double E_surf = sigma(beta, delta);
-	const double W = work_function(beta, delta);
-
-	char filename[BUFSIZ];
-	//sprintf(filename, "result[delta][Nb][111].dat");
-	sprintf(filename, "result.dat");
-
-	FILE* out = fopen(filename, "w+");
-
-	fprintf(out, "r_c: %5.8lf\n\n", r_c);
-
-	fprintf(out, "sigma_kin: %5.8lf\n", to_mJ*sigma_kin(beta));
-	fprintf(out, "sigma_cul: %5.8lf\n", to_mJ*sigma_cul(beta));
-	fprintf(out, "sigma_x: %5.8lf\n", to_mJ*sigma_x(beta));
-	fprintf(out, "sigma_c: %5.8lf\n", to_mJ*sigma_c(beta));
-	fprintf(out, "sigma_kin2: %5.8lf\n", to_mJ*sigma_kin2(beta));
-	fprintf(out, "sigma_xc2: %5.8lf\n", to_mJ*sigma_xc2(beta));
-	fprintf(out, "sigma_kin4: %5.8lf\n", to_mJ*sigma_kin4(beta));
-	fprintf(out, "sigma_xc4: %5.8lf\n", to_mJ*sigma_xc4(beta));
-	fprintf(out, "sigma_ii: %5.8lf\n", to_mJ*sigma_ii(beta, delta));
-	fprintf(out, "sigma_ei: %5.8lf\n\n", to_mJ*sigma_ei(beta, delta));
-
-	fprintf(out, "D0: %5.8lf\n\n", to_eV*D0(beta));
-	fprintf(out, "D_ei: %5.8lf\n\n", to_eV*D_ei(beta));
-	fprintf(out, "D_delta: %5.8lf\n\n", to_eV*D_delta(beta, delta));
-	fprintf(out, "mu: %5.8lf\n\n", to_eV*mu);
-
-	fprintf(out, "Beta: %5.8lf\n", beta);
-	fprintf(out, "Delta: %5.8lf\n\n", delta);
-	
-	fprintf(out, "Sigma: %5.8lf\n", to_mJ*E_surf);
-	fprintf(out, "Work function: %5.8lf\n\n", to_eV*W);
-
-	fflush(out);
-	fclose(out);
+	double x = 0.0, y = 0.0;
+	hooke_jeeves(f2, x, y);
+	printf("x = %5.6lf, y = %5.6lf\n", x, y);
 }
 
 
@@ -179,15 +141,15 @@ double sigma(const double beta, const double delta)
 	using std::sqrt, std::exp, std::sqrt;
 
 	return sigma_kin(beta) + sigma_cul(beta) + sigma_x(beta) + sigma_c(beta)
-		 + sigma_kin2(beta) + sigma_xc2(beta);
-		 //+ sigma_kin4(beta) + sigma_xc4(beta)
-		 //+ sigma_ii(beta, delta) + sigma_ei(beta, delta);
+		 + sigma_kin2(beta) + sigma_xc2(beta)
+		 + sigma_kin4(beta) + sigma_xc4(beta)
+		 + sigma_ii(beta, delta) + sigma_ei(beta, delta);
 }
 
 
 double work_function(const double beta, const double delta)
 {
-	return D0(beta) - mu; //+ D_ei(beta) + D_delta(beta, delta);
+	return D0(beta) - mu + D_ei(beta) + D_delta(beta, delta);
 }
 
 
@@ -376,8 +338,8 @@ double D_ei(const double beta)
 {
 	using std::exp, std::sinh, std::cosh;
 
-	return -(4.0*M_PI*n0*exp(-0.5*beta*d)/(beta*beta)) * (
-				beta*d*cosh(beta*r_c) - 2.0*sinh(0.5*beta*d)
+	return -(4.0*M_PI*n0/(beta*beta)) * exp(-0.5*beta*d) * (
+				beta*d*cosh(beta*r_c) - 2.0*sinh(-0.5*beta*d)
 			) / (2.0 - exp(-beta*d));
 }
 
@@ -385,7 +347,7 @@ double D_delta(const double beta, const double delta)
 {
 	using std::exp, std::sinh;
 
-	return -((4.0*M_PI*n0*exp(beta*(delta - 0.5*d)))/(beta*beta*(2.0 - exp(-beta*d)))) * (
+	return -4.0*M_PI*n0*exp(beta*(delta - 0.5*d))/(beta*beta*(2.0 - exp(-beta*d))) * (
 				2.0 * (1.0 - exp(beta*delta)) * sinh(0.5*beta*d) - beta*beta*delta*d
 			) + D_ei(beta) * (exp(beta*delta) - 1.0) - 4*M_PI*n0*d*delta;
 }
@@ -415,7 +377,7 @@ void hooke_jeeves(const sigma_t& f, double& x0)
 			hooke_jeeves_investigation(f, new_x_prev, h, new_x_next, reduce_step);
 		}
 
-		x_prev = x_next;
+		h /= 10;
 	}
 
 	x0 = x_next;
@@ -449,13 +411,13 @@ void hooke_jeeves(const sigma_t& f, double& x0, double& y0)
 	while (hx > h_lim && hy > h_lim) {
 		reduce_step = true;
 		hooke_jeeves_investigation(f, x_prev, y_prev, hx, hy, x_next, y_next, reduce_step);
-		
+
 		double new_x_prev = x_prev + 2.0 * (x_next - x_prev);
 		double new_y_prev = y_prev + 2.0 * (y_next - y_prev);
 
 		double new_x_next, new_y_next;
 
-		reduce_step	= false;
+		reduce_step = false;
 		hooke_jeeves_investigation(f, new_x_prev, new_y_prev, hx, hy, new_x_next, new_y_next, reduce_step);
 
 		while (f(new_x_next, new_y_next) < f(x_next, y_next)) {
@@ -470,9 +432,6 @@ void hooke_jeeves(const sigma_t& f, double& x0, double& y0)
 
 			hooke_jeeves_investigation(f, new_x_prev, new_y_prev, hx, hy, new_x_next, new_y_next, reduce_step);
 		}
-
-		x_prev = x_next;
-		y_prev = y_next;
 	}
 
 	x0 = x_next;
@@ -487,22 +446,22 @@ void hooke_jeeves_investigation(
 	double& hy, double& x_out, 
 	double& y_out, bool reduce_step
 )
-{ 
+{
 	x_out = x; y_out = y;
 
 	if (f(x + hx, y) < f(x, y)) {
-		x_out = x + hx; 
+		x_out = x + hx;
 	} else if (f(x - hx, y) < f(x, y)) {
-		x_out = x - hx; 
+		x_out = x - hx;
 	} else if (reduce_step) {
-		hx /= 10; 
+		hx /= 10;
 	} 
 
 	if (f(x, y + hy) < f(x, y)) {
-		y_out = y + hy; 
+		y_out = y + hy;
 	} else if (f(x, y - hy) < f(x, y)) {
-		y_out = y - hy; 
-	} else if (reduce_step) {
-		hy /= 10; 
+		y_out = y - hy;
+	} else if (reduce_step){
+		hy /= 10;
 	}
 }

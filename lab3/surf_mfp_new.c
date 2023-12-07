@@ -257,11 +257,11 @@ int main(void)
          s6[i1] = ei( );
          s7[i1] = ii( );
          s8[i1] = sww1+sww2+sww3;
-     //    s10[i]=ssvk41+ssvk42+ssvk43;
-      //  s11[i]=ssww41+ssww42+ssww43;
+         s10[i]=ssvk41+ssvk42+ssvk43;
+        s11[i]=ssww41+ssww42+ssww43;
          s9[i1] = eid( );
          ea[i1] = se1+se2-v1;
-         s[i1] = s1[i1]+s2[i1]+s3[i1]+s4[i1]+s5[i1]+gele*s6[i1]+gele*s7[i1]+s8[i1]+s9[i1];//+s10[i]+s11[i];
+         s[i1] = s1[i1]+s2[i1]+s3[i1]+s4[i1]+s5[i1]+gele*s6[i1]+gele*s7[i1]+s8[i1]+s9[i1]+s10[i]+s11[i];
 
          r[i1] = d;
          be[i1] = beta = zz[0];
@@ -269,8 +269,8 @@ int main(void)
          be3[i1] = zz[2];
          av = a_exit( );
          fprintf(vv,"d=%f,beta=%f,m.s.n.=%f,en.adg.=%f\n",d,beta,v1,se1+se2-v1);
-    //     fprintf(vv,"sku=%f,ski=%f,sob=%f,scor=%f\n",s1[i],s2[i],s3[i],s4[i]);
-    //     fprintf(vv,"svk=%f,ei=%f,ii=%f,seid=%f\n",s5[i],s6[i],s7[i],s9[i]);
+         fprintf(vv,"sku=%f,ski=%f,sob=%f,scor=%f\n",s1[i],s2[i],s3[i],s4[i]);
+         fprintf(vv,"svk=%f,ei=%f,ii=%f,seid=%f\n",s5[i],s6[i],s7[i],s9[i]);
          d=d+h;
          printf("d=%f i=%f\n",d,i1);
          if (d>d_max) break;}
@@ -324,7 +324,7 @@ u1=-2*sinh(0.5*b*d1);
 u2=v01*d1*(sinh(b*r1)-b*r1*cosh(b*r1));
 u3=b*d1*cosh(b*r1);
 w10=-u*(u1+u2+u3)*exp(-0.5*b*d1)/u0;
-       y=w1/*-w2*/-w3+w4+w5+gele*(w6/*-w7+w8+w10*/);
+       y=w1-w2-w3+w4+w5+gele*(w6-w7+w8+w10);
        y=y*27.2;
 u=4.*PI*n1*exp(b*dt)/(b*b);
 u1=-2*sinh(0.5*b*d1)*exp(-b*dt)-b*b*dt*d1;
@@ -333,7 +333,7 @@ w10_=-u*(u1+u2+u3)*exp(-0.5*b*d1)/u0;
        y_=y_*27.2;
        ys=w1-w2-w3+w4+w5+w6-w7+w8+w9;
        ys=ys*27.2;
-/*fprintf(vv,"w1=%f\n",w1*27.2);
+fprintf(vv,"w1=%f\n",w1*27.2);
 fprintf(vv,"w2=%f\n",w2*27.2);
 fprintf(vv,"w3=%f\n",w3*27.2);
 fprintf(vv,"w4=%f\n",w4*27.2);
@@ -342,9 +342,9 @@ fprintf(vv,"w6=%f\n",w6*27.2);
 fprintf(vv,"w7=%f\n",w7*27.2);
 fprintf(vv,"w8=%f\n",w8*27.2);
 fprintf(vv,"w9=%f\n",w9*27.2);
-fprintf(vv,"w10=%f\n",w10*27.2);*/
-//fprintf(vv,"w10_=%f\n",w10_*27.2);
-//fprintf(vv,"раб.вых.с учетом релакс.=%f\n",y_);
+fprintf(vv,"w10=%f\n",w10*27.2);
+fprintf(vv,"w10_=%f\n",w10_*27.2);
+fprintf(vv,"раб.вых.с учетом релакс.=%f\n",y_);
 //fprintf(vv,"раб.вых.ср.=%f\n",ys);
 //printf("w1=%f\n",w1*27.2);
 //printf("w2=%f\n",w2*27.2);
@@ -357,7 +357,7 @@ fprintf(vv,"w10=%f\n",w10*27.2);*/
 //printf("w9=%f\n",w9*27.2);
 //printf("w10=%f\n",w10*27.2);
 //printf("w10_=%f\n",w10_*27.2);
-//printf("раб.вых.с учетом релакс.=%f\n",y_);
+printf("раб.вых.с учетом релакс.=%f\n",y_);
 printf("раб.вых.ср.=%f\n",y);
 return(y);
 }
