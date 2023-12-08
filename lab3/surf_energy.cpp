@@ -22,10 +22,10 @@ constexpr double to_eV = E_h / e;
 
 /// SYSTEM PARAMETERS ///
 
-constexpr double n0 = 0.0194;
-constexpr int Z = 4;
-constexpr double C = 6.589;
-constexpr double d = 3.28;
+constexpr double n0 = 0.0412;
+constexpr int Z = 5;
+constexpr double C = 8.82;
+constexpr double d = 1.8;
 constexpr double r_s = std::pow(4.0*M_PI*n0 / 3.0, -1.0/3.0);
 constexpr double r_c = (std::sqrt(2.0) * r_s / 3.0) * std::sqrt(
 							0.458 - 2.21 / r_s + 0.9*std::pow(Z, 2.0/3.0)
@@ -63,7 +63,7 @@ double gauss_integral(const w_t& f, const double a, const double b);
 constexpr double beta_init = 1.0;
 constexpr double delta_init = 0.0;
 constexpr double h_init = 0.01;
-constexpr double h_lim = 1e-12;
+constexpr double h_lim = 1e-6;
 
 void hooke_jeeves(const sigma_t& f, double& x0);
 void hooke_jeeves_investigation(const sigma_t& f, const double x, double& h, double& x_out, bool reduce_step);
@@ -105,9 +105,9 @@ double D_delta(const double beta, const double delta);
 const double mu = 0.5 * std::pow(3.0*M_PI*M_PI*n0, 2.0/3.0)
 			      - std::pow(3.0*n0/M_PI, 1.0/3.0)
 			      - (0.056*std::pow(n0, 2.0/3.0) + 0.0059*std::pow(n0, 1.0/3.0)) / 
-			      	((0.079 + std::pow(n0, 1.0/3.0))*(0.079 + std::pow(n0, 1.0/3.0)));
-			      //- 0.4 * std::pow(Z, 2.0/3.0) * std::pow(4.0*M_PI*n0/3.0, 1.0/3.0)
-			      //+ 4.0*M_PI*n0*r_c*r_c;
+			      	((0.079 + std::pow(n0, 1.0/3.0))*(0.079 + std::pow(n0, 1.0/3.0)))
+			      - 0.4 * std::pow(Z, 2.0/3.0) * std::pow(4.0*M_PI*n0/3.0, 1.0/3.0)
+			      + 4.0*M_PI*n0*r_c*r_c;
 
 
 
@@ -134,14 +134,13 @@ int main()
 	double beta = beta_init;
 	double delta = delta_init;
 	
-	hooke_jeeves(sigma, beta); // hooke_jeeves(sigma, beta) or hooke_jeeves(sigma, beta, delta);
+	hooke_jeeves(sigma, beta, delta); // hooke_jeeves(sigma, beta) or hooke_jeeves(sigma, beta, delta);
 
 	const double E_surf = sigma(beta, delta);
 	const double W = work_function(beta, delta);
 
 	char filename[BUFSIZ];
-	//sprintf(filename, "result[delta][Nb][111].dat");
-	sprintf(filename, "result.dat");
+	sprintf(filename, "result[delta][Nb][111].dat");
 
 	FILE* out = fopen(filename, "w+");
 
@@ -179,15 +178,15 @@ double sigma(const double beta, const double delta)
 	using std::sqrt, std::exp, std::sqrt;
 
 	return sigma_kin(beta) + sigma_cul(beta) + sigma_x(beta) + sigma_c(beta)
-		 + sigma_kin2(beta) + sigma_xc2(beta);
-		 //+ sigma_kin4(beta) + sigma_xc4(beta)
-		 //+ sigma_ii(beta, delta) + sigma_ei(beta, delta);
+		 + sigma_kin2(beta) + sigma_xc2(beta)
+		 + sigma_ii(beta, delta) + sigma_ei(beta, delta)
+		 + sigma_kin4(beta) + sigma_xc4(beta);
 }
 
 
 double work_function(const double beta, const double delta)
 {
-	return D0(beta) - mu; //+ D_ei(beta) + D_delta(beta, delta);
+	return D0(beta) - mu + D_ei(beta) + D_delta(beta, delta);
 }
 
 
