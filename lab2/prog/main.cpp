@@ -7,11 +7,11 @@
 constexpr double minus_inf = -10.0;
 constexpr double plus_inf = 10.0;
 
-constexpr double beta = 0.8;
-constexpr double D = 0.5;
-constexpr double h = 0.3;
-constexpr double eps = 15.0;
-constexpr double n_0 = 1.0;
+constexpr double D = 18.0;
+constexpr double h = 12.0;
+constexpr double eps = 1.0;
+constexpr double n_0 = 0.2;
+constexpr double beta = std::sqrt((6*M_PI*n_0) / (0.5*std::pow(3*M_PI*M_PI*n_0, 2.0/3.0)));
 constexpr double k = -4.0 * M_PI * n_0 / (beta * beta); 
 
 constexpr double delta = std::sqrt(eps);
